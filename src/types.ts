@@ -7,6 +7,7 @@ export interface Account {
   type: 'Activo' | 'Pasivo' | 'Patrimonio' | 'Ingresos' | 'Costos' | 'Gastos';
   level: number; // 1: Titulo, 2: Subtitulo, 3: Imputable
   isImputable: boolean; // Si se puede usar en asientos
+  description?: string; // Explicación simple para usuarios no contadores
 }
 
 export interface JournalLine {
