@@ -344,4 +344,63 @@ export const INITIAL_ACCOUNTS: Account[] = [
   // 4.6 IMPUESTO A LA RENTA
   { code: '4.6', name: 'IMPUESTO A LA RENTA', type: 'Gastos', level: 2, isImputable: false },
   { code: '4.6.10.1', name: 'Provisión Impuesto a la Renta', type: 'Gastos', level: 3, isImputable: true },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CUENTAS NUEVAS 2024-2026 - Actualizaciones Normativas
+  // Ley 21.713 (2024), Ley 21.210 (2020), Pro Pyme 14D, Activos Digitales
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // ACTIVOS - Nuevos 2024-2026
+  { code: '1.1.320.1', name: 'Activos Digitales (Criptoactivos)', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.330.1', name: 'Crédito Fiscal Pro Pyme 14D', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.340.1', name: 'PPM Tasa Reducida Pro Pyme (12.5%)', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.350.1', name: 'Crédito por Capacitación SENCE', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.360.1', name: 'Crédito Inversión en I+D (Ley 20.241)', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.370.1', name: 'Crédito Activo Fijo PYME', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.380.1', name: 'IVA Exportador por Recuperar', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.140.1', name: 'Inversión Fondos Mutuos y de Inversión', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.150.1', name: 'Participación en Cuotas de Fondos', type: 'Activo', level: 3, isImputable: true },
+
+  // PASIVOS - Nuevos 2024-2026
+  { code: '2.1.240.1', name: 'Retención Boletas de Honorarios (15.25% - 2026)', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.250.1', name: 'Impuesto Sustitutivo Vendedores Ambulantes (1.5%)', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.260.1', name: 'Cotización Seguro Cesantía AFC por Pagar', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.270.1', name: 'Cotización SIS (Seguro Invalidez y Sobrevivencia)', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.280.1', name: 'APV Colectivo por Pagar', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.290.1', name: 'Impuesto Adicional por Servicios Digitales', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.300.1', name: 'IVA Plataformas Digitales Extranjeras', type: 'Pasivo', level: 3, isImputable: true },
+
+  // PATRIMONIO - Registros Pro Pyme 14D (Ley 21.210)
+  { code: '3.3', name: 'REGISTROS TRIBUTARIOS PRO PYME', type: 'Patrimonio', level: 2, isImputable: false },
+  { code: '3.3.10.1', name: 'RAI - Rentas Afectas a Impuestos', type: 'Patrimonio', level: 3, isImputable: true },
+  { code: '3.3.20.1', name: 'REX - Rentas Exentas e Ingresos No Renta', type: 'Patrimonio', level: 3, isImputable: true },
+  { code: '3.3.30.1', name: 'STUT - Saldo Total de Utilidades Tributables', type: 'Patrimonio', level: 3, isImputable: true },
+  { code: '3.3.40.1', name: 'SAC - Saldo Acumulado de Créditos', type: 'Patrimonio', level: 3, isImputable: true },
+  { code: '3.3.50.1', name: 'Diferencia Valor Libro vs Tributario', type: 'Patrimonio', level: 3, isImputable: true },
+
+  // INGRESOS - Nuevos 2024-2026
+  { code: '4.4.160.1', name: 'Ingresos por Operaciones con Activos Digitales', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.170.1', name: 'Ingresos por Servicios de Economía Digital', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.180.1', name: 'Rescate Fondos Mutuos y de Inversión', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.190.1', name: 'Utilidad en Venta de Activos Digitales', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.200.1', name: 'Ingresos por Staking/Mining Criptoactivos', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.210.1', name: 'Subsidio Empleo Pro Pyme', type: 'Ingresos', level: 3, isImputable: true },
+
+  // GASTOS - Nuevos 2024-2026
+  { code: '4.5.150.1', name: 'Pérdida en Operaciones con Activos Digitales', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.160.1', name: 'Gastos por Servicios Digitales Internacionales', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.170.1', name: 'Comisiones Plataformas Digitales', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.180.1', name: 'Cotización Patronal Seguro Cesantía (2.4%)', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.190.1', name: 'Cotización Patronal SIS (1.53%)', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.200.1', name: 'Gastos Rechazados Art. 21 LIR', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.210.1', name: 'Retiros Presuntos Art. 21 LIR', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.220.1', name: 'Multas e Intereses SII', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.230.1', name: 'Depreciación Instantánea Pro Pyme', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.240.1', name: 'Gasto por Diferencia Temporal Impuesto Diferido', type: 'Gastos', level: 3, isImputable: true },
+
+  // IMPUESTOS - Nuevas tasas y regímenes 2026
+  { code: '4.6.20.1', name: 'Impuesto 1° Categoría Pro Pyme (12.5% - 2026)', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.6.30.1', name: 'Impuesto Único sobre Activos Digitales', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.6.40.1', name: 'Impuesto Adicional Servicios Digitales No Residentes', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.6.50.1', name: 'Impuesto Verde (Emisiones CO2)', type: 'Gastos', level: 3, isImputable: true },
 ];
