@@ -1,10 +1,13 @@
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from typing import Optional
 from datetime import datetime, timedelta
 import uvicorn
 import os
+from pathlib import Path
 
 # Import our services
 from utils.cert_parser import parse_pkcs12
@@ -12,12 +15,19 @@ from services.sii_auth import authenticate
 
 app = FastAPI(title="SII Backend Server", version="1.0.0")
 
+# Get the project root (one level up from python_server)
+PROJECT_ROOT = Path(__file__).parent.parent
+DIST_DIR = PROJECT_ROOT / "dist"
+
 # CORS setup
 origins = [
     "http://localhost:5173",
     "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
+    "*",  # Allow all origins in production
 ]
 
 app.add_middleware(
@@ -138,6 +148,22 @@ async def get_rcv_purchase(period: Optional[str] = None):
         "period": period or datetime.now().strftime("%Y%m")
     }
 
+# --- PRODUCTION: Serve React Frontend ---
+# Mount static files if dist folder exists (production build)
+if DIST_DIR.exists():
+    # Serve static assets
+    app.mount("/assets", StaticFiles(directory=DIST_DIR / "assets"), name="assets")
+    
+    # Catch-all route for SPA (must be last)
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Try to serve the file directly
+        file_path = DIST_DIR / full_path
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(file_path)
+        # Otherwise return index.html for SPA routing
+        return FileResponse(DIST_DIR / "index.html")
+
 if __name__ == "__main__":
     print("")
     print("═══════════════════════════════════════════════")
@@ -147,3 +173,4 @@ if __name__ == "__main__":
     print(f"   Ambiente:   {ENVIRONMENT.upper()}")
     print("")
     uvicorn.run("main:app", host="0.0.0.0", port=3001, reload=True)
+

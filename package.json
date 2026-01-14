@@ -4,9 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "./run_app.sh",
-    "dev": "./run_app.sh",
-    "server": "echo 'Use npm run start for the full python app'"
+    "dev": "vite",
+    "server": "./run_python_server.sh",
+    "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@google/genai": "^1.31.0",
