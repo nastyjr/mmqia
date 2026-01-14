@@ -1,0 +1,5 @@
+{
+  "name": "hola",
+  "description": "Una aplicación de contabilidad inteligente con autenticación, gestión de transacciones, gráficos financieros y análisis impulsado por Gemini AI.",
+  "requestFramePermissions": []
+}

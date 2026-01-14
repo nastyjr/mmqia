@@ -1,0 +1,202 @@
+
+// ==========================================
+// 5. GR01 - GOODS RECEIPT (FROM PO)
+// ==========================================
+import { PurchaseOrder } from '../types/purchase-order';
+import { purchaseOrdersService } from '../services/databaseService';
+
+const GoodsReceipt = () => {
+    const [pendingOrders, setPendingOrders] = useState<PurchaseOrder[]>([]);
+    const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [locations, setLocations] = useState<StorageLocation[]>([]);
+    const [targetLocation, setTargetLocation] = useState('');
+
+    useEffect(() => {
+        loadPending();
+        loadLocations();
+    }, []);
+
+    const loadPending = async () => {
+        setLoading(true);
+        try {
+            const allOrders = await purchaseOrdersService.getAll();
+            // Filter pending or partially received orders
+            const pending = allOrders.filter((o: any) => o.status === 'PENDING' || o.status === 'PARTIAL');
+            
+            // Map items correctly
+            const mapped = pending.map((o: any) => ({
+                ...o,
+                supplierName: o.supplier_name,
+                items: (o.purchase_order_items || []).map((i: any) => ({
+                    id: i.id,
+                    productId: i.product_id,
+                    productName: i.product_name,
+                    quantity: i.quantity,
+                    receivedQty: i.received_quantity || 0, // Assuming this field exists or defaults to 0
+                    unitCost: i.net_cost || i.unit_cost
+                }))
+            }));
+            setPendingOrders(mapped);
+        } catch (e) {
+            console.error(e);
+            alert('Error cargando órdenes pendientes');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadLocations = async () => {
+        const locs = await storageLocationsService.getAll();
+        setLocations(locs as any);
+        if (locs.length > 0) setTargetLocation(locs[0].id);
+    };
+
+    const handleReceiveAll = async () => {
+        if (!selectedOrder || !targetLocation) return alert('Selecciona un almacén destino');
+        
+        if (!confirm(`¿Confirmar recepción de todos los productos de la Orden ${selectedOrder.number}?`)) return;
+
+        setLoading(true);
+        try {
+            // Loop through items and create 101 movements
+            for (const item of selectedOrder.items || []) {
+                const qtyToReceive = item.quantity; // Receive remaining
+                
+                // 1. Create Stock Movement (101)
+                await stockMovementsService.create({
+                    product_id: item.productId,
+                    location_id: targetLocation,
+                    date: new Date().toISOString().split('T')[0],
+                    type: 'COMPRA',
+                    movement_code: '101',
+                    quantity: qtyToReceive,
+                    unit_cost: item.unitCost,
+                    total_value: qtyToReceive * item.unitCost,
+                    document_ref: selectedOrder.number,
+                    stock_after: 0 // Service will calculate? Or we need to update stock
+                });
+
+                // 2. Update Stock (Upsert)
+                const currentStock = await productStocksService.getStock(item.productId, targetLocation);
+                const newQty = (currentStock?.quantity || 0) + qtyToReceive;
+                await productStocksService.updateStock(item.productId, targetLocation, newQty);
+            }
+
+            // 3. Update PO Status
+            await purchaseOrdersService.updateStatus(selectedOrder.id, 'RECEIVED');
+
+            alert('Recepción exitosa. Stock actualizado.');
+            setSelectedOrder(null);
+            loadPending();
+
+        } catch (e: any) {
+            console.error(e);
+            alert('Error en la recepción: ' + e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+            {/* List of Pending POs */}
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col">
+                <div className="p-4 border-b border-slate-100 bg-slate-50">
+                    <h3 className="font-bold text-slate-700 flex items-center gap-2">
+                        <Truck size={18} className="text-blue-500"/> Pendientes de Recepción
+                    </h3>
+                </div>
+                <div className="overflow-y-auto flex-1 p-2 space-y-2">
+                    {loading && <div className="text-center p-4 text-slate-400">Cargando...</div>}
+                    {!loading && pendingOrders.length === 0 && <div className="text-center p-8 text-xs text-slate-400">No hay órdenes pendientes.</div>}
+                    
+                    {pendingOrders.map(order => (
+                        <div 
+                            key={order.id} 
+                            onClick={() => setSelectedOrder(order)}
+                            className={`p-3 border rounded-lg cursor-pointer transition-all ${selectedOrder?.id === order.id ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-200' : 'bg-white border-slate-200 hover:border-blue-200 hover:shadow-sm'}`}
+                        >
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="font-bold text-slate-800 text-sm">{order.number}</span>
+                                <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-bold">{order.status}</span>
+                            </div>
+                            <div className="text-xs text-slate-500 mb-1">{order.supplierName}</div>
+                            <div className="text-[10px] text-slate-400 flex justify-between">
+                                <span>{order.items?.length} Ítems</span>
+                                <span>{order.date}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Receipt Form */}
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 lg:col-span-2 flex flex-col">
+                {selectedOrder ? (
+                    <div className="flex-1 flex flex-col">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-start">
+                             <div>
+                                <h2 className="text-xl font-bold text-slate-800 mb-1">Recepción Orden {selectedOrder.number}</h2>
+                                <p className="text-sm text-slate-500">{selectedOrder.supplierName} • {selectedOrder.supplierRut}</p>
+                            </div>
+                            <div className="bg-slate-100 p-2 rounded-lg">
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Almacén Destino</label>
+                                <select 
+                                    className="bg-white border border-slate-300 rounded text-sm p-1 w-40"
+                                    value={targetLocation}
+                                    onChange={e => setTargetLocation(e.target.value)}
+                                >
+                                    {locations.map(l => <option key={l.id} value={l.id}>{l.code} - {l.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-0">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-slate-50 text-slate-500 font-bold border-b text-xs uppercase sticky top-0">
+                                    <tr>
+                                        <th className="p-4">Producto</th>
+                                        <th className="p-4 text-center">Cant. Original</th>
+                                        <th className="p-4 text-center">Por Recibir</th>
+                                        <th className="p-4 text-right">Valor Neto</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {selectedOrder.items?.map((item, idx) => (
+                                        <tr key={idx} className="hover:bg-slate-50">
+                                            <td className="p-4">
+                                                <div className="font-medium text-slate-800">{item.productName}</div>
+                                                <div className="text-xs text-slate-400">ID: {item.productId?.slice(0, 8)}...</div>
+                                            </td>
+                                            <td className="p-4 text-center text-slate-500">{item.quantity}</td>
+                                            <td className="p-4 text-center font-bold text-blue-600 bg-blue-50/30">{item.quantity}</td>
+                                            <td className="p-4 text-right font-mono text-slate-600">${item.unitCost?.toLocaleString('es-CL')}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                            <button onClick={() => setSelectedOrder(null)} className="px-4 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-lg">Cancelar</button>
+                            <button 
+                                onClick={handleReceiveAll} 
+                                className="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 flex items-center gap-2"
+                                disabled={loading}
+                            >
+                                {loading ? <RefreshCw className="animate-spin" /> : <CheckCircle size={18} />}
+                                Confirmar Recepción Total
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-slate-300 gap-4">
+                        <Truck size={64} className="opacity-20" />
+                        <p>Selecciona una orden de la lista para recepcionar</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};

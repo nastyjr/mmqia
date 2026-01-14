@@ -1,0 +1,6 @@
+# ENV SETUP INSTRUCTIONS
+# Rename this file to .env (dot env) in the root directory.
+
+VITE_SUPABASE_URL=https://trrmcqvakkrxjgzahdzb.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRycm1jcXZha2tyeGpnemFoZHpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMjY1MTAsImV4cCI6MjA4MDcwMjUxMH0.VTES5JQORUo6w9wVG-W5T8FaJSziMZu8mtld5svDjkI
+VITE_GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
