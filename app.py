@@ -6,11 +6,20 @@ from datetime import datetime
 import os
 import sys
 
-# Add python_server to path to reuse services
-sys.path.append(os.path.join(os.path.dirname(__file__), 'python_server'))
+# Cloud mode detection - SII auth disabled in cloud
+CLOUD_MODE = os.environ.get('STREAMLIT_SHARING_MODE') is not None or 'streamlit' in os.environ.get('HOME', '')
 
-from services.sii_auth import authenticate
-from utils.cert_parser import parse_pkcs12
+# Only import crypto modules if running locally
+if not CLOUD_MODE:
+    try:
+        sys.path.append(os.path.join(os.path.dirname(__file__), 'python_server'))
+        from services.sii_auth import authenticate
+        from utils.cert_parser import parse_pkcs12
+        SII_AVAILABLE = True
+    except ImportError:
+        SII_AVAILABLE = False
+else:
+    SII_AVAILABLE = False
 
 # Configuration
 st.set_page_config(
@@ -86,36 +95,32 @@ def login_page():
 
     with col2:
         st.subheader("Acceso con Certificado Digital")
-        cert_file = st.file_uploader("Subir Certificado (.p12)", type=['p12'])
-        password = st.text_input("Contraseña Certificado", type="password")
-        
-        if st.button("Ingresar con SII"):
-            if cert_file and password:
-                with st.spinner("Autenticando con SII..."):
-                    try:
-                        # Save temp file
-                        with open("temp_cert.p12", "wb") as f:
-                            f.write(cert_file.getbuffer())
-                        
-                        # Read and parse
-                        with open("temp_cert.p12", "rb") as f:
-                            p12_data = f.read()
-                            
-                        # Use our backend logic!
-                        cert_data = parse_pkcs12(p12_data, password)
-                        auth_result = authenticate(cert_data['pem_key'], cert_data['pem_cert'])
-                        
-                        st.session_state.user = {
-                            "name": cert_data['subject'].get('CN', 'Usuario SII'),
-                            "token": auth_result['token']
-                        }
-                        st.success("Autenticación exitosa!")
-                        st.rerun()
-                        
-                    except Exception as e:
-                        st.error(f"Error: {str(e)}")
-            else:
-                st.warning("Debe subir certificado y contraseña")
+        if SII_AVAILABLE:
+            cert_file = st.file_uploader("Subir Certificado (.p12)", type=['p12'])
+            password = st.text_input("Contraseña Certificado", type="password")
+            
+            if st.button("Ingresar con SII"):
+                if cert_file and password:
+                    with st.spinner("Autenticando con SII..."):
+                        try:
+                            with open("temp_cert.p12", "wb") as f:
+                                f.write(cert_file.getbuffer())
+                            with open("temp_cert.p12", "rb") as f:
+                                p12_data = f.read()
+                            cert_data = parse_pkcs12(p12_data, password)
+                            auth_result = authenticate(cert_data['pem_key'], cert_data['pem_cert'])
+                            st.session_state.user = {
+                                "name": cert_data['subject'].get('CN', 'Usuario SII'),
+                                "token": auth_result['token']
+                            }
+                            st.success("Autenticación exitosa!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error: {str(e)}")
+                else:
+                    st.warning("Debe subir certificado y contraseña")
+        else:
+            st.warning("🔒 El acceso con Certificado SII no está disponible en la versión Cloud. Use el botón Demo o ejecute la aplicación localmente.")
 
 def dashboard_page():
     st.title("Dashboard Financiero")
