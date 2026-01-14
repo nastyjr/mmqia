@@ -143,51 +143,205 @@ export const INITIAL_COST_CENTERS: CostCenter[] = [
   { id: 'cc-4', code: '400', name: 'Marketing' },
 ];
 
-// Datos iniciales para el Plan de Cuentas (Extracto estándar IFRS/Chile)
+// Plan de Cuentas MIPYME - SII Chile (Manual Oficial 2026)
+// Actualizado conforme normativa tributaria vigente
 export const INITIAL_ACCOUNTS: Account[] = [
-  { code: '1.1.01', name: 'Caja', type: 'Activo', level: 3, isImputable: true },
-  { code: '1.1.03', name: 'Banco de Chile', type: 'Activo', level: 3, isImputable: true },
-  { code: '1.1.04', name: 'Clientes Nacionales', type: 'Activo', level: 3, isImputable: true },
-  { code: '1.1.05', name: 'IVA Crédito Fiscal', type: 'Activo', level: 3, isImputable: true },
-  { code: '1.1.06', name: 'Mercaderías', type: 'Activo', level: 3, isImputable: true },
-  { code: '1.2.00', name: 'ACTIVO NO CORRIENTE', type: 'Activo', level: 2, isImputable: false },
-  { code: '1.2.01', name: 'Muebles y Útiles', type: 'Activo', level: 3, isImputable: true },
-  { code: '1.2.02', name: 'Equipos Computacionales', type: 'Activo', level: 3, isImputable: true },
+  // ═══════════════════════════════════════════════════════════════════════
+  // 1. ACTIVOS
+  // ═══════════════════════════════════════════════════════════════════════
+  { code: '1', name: 'ACTIVOS', type: 'Activo', level: 1, isImputable: false },
 
-  { code: '2.0.00', name: 'PASIVO', type: 'Pasivo', level: 1, isImputable: false },
-  { code: '2.1.00', name: 'PASIVO CORRIENTE', type: 'Pasivo', level: 2, isImputable: false },
-  { code: '2.1.01', name: 'Proveedores Nacionales', type: 'Pasivo', level: 3, isImputable: true },
-  { code: '2.1.02', name: 'Acreedores Varios', type: 'Pasivo', level: 3, isImputable: true },
-  { code: '2.1.03', name: 'IVA Débito Fiscal', type: 'Pasivo', level: 3, isImputable: true },
-  { code: '2.1.04', name: 'Imposiciones por Pagar', type: 'Pasivo', level: 3, isImputable: true },
-  { code: '2.1.05', name: 'Impuesto a la Renta por Pagar', type: 'Pasivo', level: 3, isImputable: true },
+  // 1.1 ACTIVO CIRCULANTE
+  { code: '1.1', name: 'ACTIVO CIRCULANTE', type: 'Activo', level: 2, isImputable: false },
+  { code: '1.1.10.1', name: 'Caja', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.20.1', name: 'Banco', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.30.1', name: 'Insumos', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.40.1', name: 'Productos en Proceso', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.50.1', name: 'Mercaderías', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.60.1', name: 'Depósito a Plazo', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.70.1', name: 'Valores Negociables', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.80.1', name: 'Deudores por Ventas', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.90.1', name: 'Documentos por Cobrar', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.100.1', name: 'Documentos por Cobrar de Terceros', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.110.1', name: 'Documentos y Cuentas por Cobrar a Empresas Relacionadas', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.120.1', name: 'Documentos y Cuentas por Cobrar a Empresas No Relacionadas', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.130.1', name: 'Estimación Deudores Incobrable (Provisión)', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.140.1', name: 'Deudores Varios', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.150.1', name: 'Anticipo Remuneraciones', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.160.1', name: 'Préstamos a Trabajadores', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.170.1', name: 'Otros Descuentos de Remuneraciones', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.180.1', name: 'Préstamos a Socio (Empresario)', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.190.1', name: 'Cuenta Corriente Consignatario', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.200.1', name: 'Impuestos por Recuperar', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.210.1', name: 'Impuesto Específico Combustible', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.220.1', name: 'IVA Créditos', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.230.1', name: 'Crédito Impuesto Ley 18.211', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.240.1', name: 'Crédito Impuesto Específico', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.250.1', name: 'Crédito Impuesto Adicional', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.260.1', name: 'Impuestos Diferidos', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.270.1', name: 'Gastos Pagados por Anticipado', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.280.1', name: 'Otros Activos Circulantes', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.290.1', name: 'Contratos Leasing', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.300.1', name: 'Activos para Leasing', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.1.310.1', name: 'Pago Provisional Mensual (PPM)', type: 'Activo', level: 3, isImputable: true },
 
-  { code: '3.0.00', name: 'PATRIMONIO', type: 'Patrimonio', level: 1, isImputable: false },
-  { code: '3.1.01', name: 'Capital Pagado', type: 'Patrimonio', level: 3, isImputable: true },
-  { code: '3.1.02', name: 'Utilidad del Ejercicio', type: 'Patrimonio', level: 3, isImputable: true },
+  // 1.2 ACTIVO FIJO
+  { code: '1.2', name: 'ACTIVO FIJO', type: 'Activo', level: 2, isImputable: false },
+  { code: '1.2.10.1', name: 'Terrenos', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.2.20.1', name: 'Construcciones y Obras de Infraestructura', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.2.30.1', name: 'Maquinarias y Equipos', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.2.40.1', name: 'Muebles y Útiles', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.2.50.1', name: 'Activos en Leasing', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.2.60.1', name: 'Otros Activos Fijos', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.2.70.1', name: 'Mayor Valor Retasación Técnica del Activo Fijo', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.2.80.1', name: 'Depreciación Acumulada', type: 'Activo', level: 3, isImputable: true },
 
-  { code: '4.0.00', name: 'INGRESOS', type: 'Ingresos', level: 1, isImputable: false },
-  { code: '4.1.01', name: 'Ventas Netas', type: 'Ingresos', level: 3, isImputable: true },
-  { code: '4.1.02', name: 'Ingresos Fuera de Explotación', type: 'Ingresos', level: 3, isImputable: true },
+  // 1.3 OTROS ACTIVOS
+  { code: '1.3', name: 'OTROS ACTIVOS', type: 'Activo', level: 2, isImputable: false },
+  { code: '1.3.10.1', name: 'Cuentas Particulares', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.20.1', name: 'Inversión en Empresas Relacionadas', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.30.1', name: 'Inversión en Otras Sociedades', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.40.1', name: 'Deudores Largo Plazo', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.50.1', name: 'Documentos y Cuentas por Cobrar a Empresas Relacionadas Largo Plazo', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.60.1', name: 'Impuestos Diferidos Largo Plazo', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.70.1', name: 'Intangibles', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.80.1', name: 'Otros Activos', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.90.1', name: 'Otros Activos Trabajadores', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.100.1', name: 'Contratos de Leasing de Largo Plazo', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.110.1', name: 'Inversión Ley Arica', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.120.1', name: 'Inversión Ley Austral', type: 'Activo', level: 3, isImputable: true },
+  { code: '1.3.130.1', name: 'Amortización (Acumulada)', type: 'Activo', level: 3, isImputable: true },
 
-  { code: '5.0.00', name: 'COSTOS', type: 'Costos', level: 1, isImputable: false },
-  { code: '5.1.01', name: 'Costo de Ventas', type: 'Costos', level: 3, isImputable: true },
-  { code: '5.2.03', name: 'Otros Ingresos', type: 'Ingresos', level: 3, isImputable: true },
+  // ═══════════════════════════════════════════════════════════════════════
+  // 2. PASIVOS
+  // ═══════════════════════════════════════════════════════════════════════
+  { code: '2', name: 'PASIVOS', type: 'Pasivo', level: 1, isImputable: false },
 
+  // 2.1 PASIVO CIRCULANTE
+  { code: '2.1', name: 'PASIVO CIRCULANTE', type: 'Pasivo', level: 2, isImputable: false },
+  { code: '2.1.10.1', name: 'Obligaciones con Bancos e Instituciones Financieras', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.20.1', name: 'Obligaciones con el Público (Pagarés)', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.30.1', name: 'Cuentas y Documentos por Pagar', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.40.1', name: 'Documentos y Cuentas por Pagar Empresas Relacionadas', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.50.1', name: 'Documentos y Cuentas por Pagar Empresas No Relacionadas', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.60.1', name: 'Cuenta Corriente Comitente', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.70.1', name: 'Acreedores Varios', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.80.1', name: 'Obligaciones por Leasing Porción C/P', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.90.1', name: 'Intereses Diferidos por Leasing', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.100.1', name: 'Provisiones', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.110.1', name: 'Remuneraciones por Pagar', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.120.1', name: 'Entidades Previsionales por Pagar', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.130.1', name: 'Impuesto Único por Pagar', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.140.1', name: 'Retenciones por Pagar', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.150.1', name: 'Impuesto a la Renta por Pagar', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.160.1', name: 'Otros Impuestos por Pagar', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.170.1', name: 'IVA Débitos', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.180.1', name: 'Impuesto Adicional Débitos', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.190.1', name: 'Impuesto Ley 18.211 Débitos', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.200.1', name: 'Impuestos Diferidos', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.210.1', name: 'Ingresos Percibidos por Adelantado', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.220.1', name: 'Depósitos Garantía de Envases', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.230.1', name: 'Otros Pasivos Circulantes', type: 'Pasivo', level: 3, isImputable: true },
 
-  { code: '6.0.00', name: 'GASTOS', type: 'Gastos', level: 1, isImputable: false },
-  { code: '6.1.00', name: 'GASTOS ADMINISTRACIÓN Y VENTAS', type: 'Gastos', level: 2, isImputable: false },
-  { code: '6.1.01', name: 'Sueldos y Salarios', type: 'Gastos', level: 3, isImputable: true },
-  { code: '6.1.02', name: 'Arriendos', type: 'Gastos', level: 3, isImputable: true },
-  { code: '6.1.03', name: 'Servicios Básicos (Luz/Agua)', type: 'Gastos', level: 3, isImputable: true },
-  { code: '6.1.04', name: 'Gastos Bancarios', type: 'Gastos', level: 3, isImputable: true },
-  { code: '6.1.05', name: 'Gastos de Representación', type: 'Gastos', level: 3, isImputable: true },
-  { code: '6.1.06', name: 'Publicidad y Marketing', type: 'Gastos', level: 3, isImputable: true },
-  { code: '6.2.02', name: 'Pérdidas y Mermas', type: 'Gastos', level: 3, isImputable: true },
+  // 2.2 PASIVO LARGO PLAZO
+  { code: '2.2', name: 'PASIVO LARGO PLAZO', type: 'Pasivo', level: 2, isImputable: false },
+  { code: '2.2.10.1', name: 'Obligaciones con Bancos e Inst. Financieras L/P', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.2.20.1', name: 'Obligaciones con el Público Largo Plazo (Bonos)', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.2.30.1', name: 'Cuentas y Documentos por Pagar L/P', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.2.40.1', name: 'Acreedores Varios L/P', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.2.50.1', name: 'Obligaciones por Leasing Porción L/P', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.2.60.1', name: 'Documentos y Cuentas por Pagar a Empresas Relacionadas L/P', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.2.70.1', name: 'Impuestos Diferidos L/P', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.2.80.1', name: 'Otros Pasivos Largo Plazo', type: 'Pasivo', level: 3, isImputable: true },
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // 3. PATRIMONIO
+  // ═══════════════════════════════════════════════════════════════════════
+  { code: '3', name: 'PATRIMONIO', type: 'Patrimonio', level: 1, isImputable: false },
 
-  // Activo Fijo Related
-  { code: '1.2.99', name: 'Depreciación Acumulada', type: 'Activo', level: 3, isImputable: true }, // Contra-asset
-  { code: '6.1.10', name: 'Depreciación del Ejercicio', type: 'Gastos', level: 3, isImputable: true },
-  { code: '6.1.11', name: 'Corrección Monetaria', type: 'Gastos', level: 3, isImputable: true }, // Can be debit or credit
+  // 3.1 CAPITAL
+  { code: '3.1', name: 'CAPITAL', type: 'Patrimonio', level: 2, isImputable: false },
+  { code: '3.1.10.1', name: 'Capital Pagado', type: 'Patrimonio', level: 3, isImputable: true },
+  { code: '3.1.20.1', name: 'Reserva Revalorización Capital Propio', type: 'Patrimonio', level: 3, isImputable: true },
+  { code: '3.1.30.1', name: 'Otras Reservas', type: 'Patrimonio', level: 3, isImputable: true },
+  { code: '3.1.40.1', name: 'Cuenta Obligada Socio', type: 'Patrimonio', level: 3, isImputable: true },
+
+  // 3.2 UTILIDADES/PÉRDIDAS
+  { code: '3.2', name: 'RESULTADOS ACUMULADOS', type: 'Patrimonio', level: 2, isImputable: false },
+  { code: '3.2.10.1', name: 'Utilidades Acumuladas', type: 'Patrimonio', level: 3, isImputable: true },
+  { code: '3.2.20.1', name: 'Pérdidas Acumuladas', type: 'Patrimonio', level: 3, isImputable: true },
+  { code: '3.2.30.1', name: 'Utilidad del Ejercicio', type: 'Patrimonio', level: 3, isImputable: true },
+  { code: '3.2.40.1', name: 'Pérdida y Ganancia', type: 'Patrimonio', level: 3, isImputable: true },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 4. RESULTADO (INGRESOS, COSTOS, GASTOS)
+  // ═══════════════════════════════════════════════════════════════════════
+  { code: '4', name: 'RESULTADO', type: 'Ingresos', level: 1, isImputable: false },
+
+  // 4.1 INGRESOS DE EXPLOTACIÓN
+  { code: '4.1', name: 'INGRESOS DE EXPLOTACIÓN', type: 'Ingresos', level: 2, isImputable: false },
+  { code: '4.1.10.1', name: 'Ingreso por Ventas de Bienes y Servicios del Giro', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.1.20.1', name: 'Otros Ingresos del Giro', type: 'Ingresos', level: 3, isImputable: true },
+
+  // 4.2 COSTOS DE EXPLOTACIÓN
+  { code: '4.2', name: 'COSTOS DE EXPLOTACIÓN', type: 'Costos', level: 2, isImputable: false },
+  { code: '4.2.10.1', name: 'Costos Directo por Ventas de Bienes y Servicios del Giro', type: 'Costos', level: 3, isImputable: true },
+  { code: '4.2.20.1', name: 'Otros Costos Directos del Giro', type: 'Costos', level: 3, isImputable: true },
+
+  // 4.3 GASTOS ADMINISTRACIÓN Y VENTA
+  { code: '4.3', name: 'GASTOS ADMINISTRACIÓN Y VENTA', type: 'Gastos', level: 2, isImputable: false },
+  { code: '4.3.10.1', name: 'Gastos Generales', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.20.1', name: 'Contribuciones', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.30.1', name: 'Deudores Incobrables', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.40.1', name: 'Reparaciones Automóviles', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.50.1', name: 'Gastos de Organización y Puesta en Marcha', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.60.1', name: 'Gastos de Investigación y Desarrollo', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.70.1', name: 'Sueldos (Remuneraciones)', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.80.1', name: 'Aporte Patronal', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.90.1', name: 'Honorarios', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.100.1', name: 'Sueldo Empresarial', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.110.1', name: 'Depreciación', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.120.1', name: 'Amortización', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.130.1', name: 'Mermas (Castigo de Mercaderías)', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.140.1', name: 'Gasto Promoción', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.3.150.1', name: 'Otros Gastos de Administración y Venta', type: 'Gastos', level: 3, isImputable: true },
+
+  // 4.4 OTROS INGRESOS FUERA DE EXPLOTACIÓN
+  { code: '4.4', name: 'OTROS INGRESOS FUERA DE EXPLOTACIÓN', type: 'Ingresos', level: 2, isImputable: false },
+  { code: '4.4.10.1', name: 'Ingresos Financieros', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.20.1', name: 'Utilidad Inversión en Empresas Relacionadas', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.30.1', name: 'Rentas de Fuente Extranjera', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.40.1', name: 'Dividendos Percibidos', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.50.1', name: 'Ingresos No Renta', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.60.1', name: 'Rentas Exentas Impuesto 1° Categoría', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.70.1', name: 'Rentas Afectas a Impuesto Único de 1° Categoría', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.80.1', name: 'Rentas por Arriendos de Bienes Raíces Agrícolas', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.90.1', name: 'Rentas por Bienes Raíces No Agrícolas', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.100.1', name: 'Otras Rentas Afectas a Impuesto de 1° Categoría', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.110.1', name: 'Comisiones Percibidas', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.120.1', name: 'Ingresos Fuera de Explotación', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.130.1', name: 'Ajuste Ejercicio Anterior', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.140.1', name: 'Corrección Monetaria', type: 'Ingresos', level: 3, isImputable: true },
+  { code: '4.4.150.1', name: 'Diferencia por Tipo de Cambio', type: 'Ingresos', level: 3, isImputable: true },
+
+  // 4.5 EGRESOS FUERA DE EXPLOTACIÓN
+  { code: '4.5', name: 'EGRESOS FUERA DE EXPLOTACIÓN', type: 'Gastos', level: 2, isImputable: false },
+  { code: '4.5.10.1', name: 'Gastos Financieros', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.20.1', name: 'Comisiones Pagadas', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.30.1', name: 'Pérdida Inversión en Empresas Relacionadas', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.40.1', name: 'Costos y Gastos por Rentas Fuentes Extranjeras', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.50.1', name: 'Otros Egresos Fuera de Explotación', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.60.1', name: 'Pérdida por Financiamiento (Operaciones en Leasing)', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.70.1', name: 'Gastos Aceptado por Donaciones para Fines Sociales', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.80.1', name: 'Gastos Aceptado por Donaciones para Fines Políticos', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.90.1', name: 'Gasto Aceptado por Donaciones Art. N° 10 Ley 19.885', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.100.1', name: 'Donaciones Escasos Recursos Art. 46 DL 3063', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.110.1', name: 'Donaciones sin Beneficios Tributarios', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.120.1', name: 'Otras Donaciones', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.130.1', name: 'Provisiones', type: 'Gastos', level: 3, isImputable: true },
+  { code: '4.5.140.1', name: 'Impuestos No Recuperables', type: 'Gastos', level: 3, isImputable: true },
+
+  // 4.6 IMPUESTO A LA RENTA
+  { code: '4.6', name: 'IMPUESTO A LA RENTA', type: 'Gastos', level: 2, isImputable: false },
+  { code: '4.6.10.1', name: 'Provisión Impuesto a la Renta', type: 'Gastos', level: 3, isImputable: true },
 ];
