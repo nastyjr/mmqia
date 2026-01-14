@@ -157,7 +157,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setCurren
                                     <Grid className="h-6 w-6 text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="text-xl font-bold text-slate-800 tracking-tight leading-none">RJC SOFTWARE</h1>
+                                    <h1 className="text-xl font-bold text-slate-800 tracking-tight leading-none">MCONSULTORES SOFTWARE</h1>
                                     <p className="text-[10px] text-slate-500 font-medium">SOLUCIONES A SU ALCANCE</p>
                                 </div>
                             </div>
