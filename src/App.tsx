@@ -3,6 +3,7 @@ import { Auth } from './components/Auth';
 import { Dashboard } from './components/Dashboard';
 import { AccountingEntryForm } from './components/AccountingEntryForm';
 import { LibroDiarioView } from './components/LibroDiarioView';
+import { LibroMayorView } from './components/LibroMayorView';
 import { PlanDeCuentasView } from './components/PlanDeCuentasView';
 import { GenericBookView, ColumnDef } from './components/GenericBookView';
 import { Formulario29View } from './components/Formulario29View';
@@ -255,30 +256,9 @@ const MainContent: React.FC = () => {
       )}
 
       {currentView === AppView.LIBRO_MAYOR && (
-        <GenericBookView
-          title="Libro Mayor"
-          subtitle="Saldos Acumulados por Cuenta Contable"
-          columns={COLS_MAYOR}
-          data={INITIAL_ACCOUNTS.map(acc => {
-            // Calculate balances for each account
-            let debit = 0;
-            let credit = 0;
-            journalEntries.forEach(entry => {
-              entry.lines.filter(l => l.accountId === acc.code).forEach(l => {
-                debit += l.debit;
-                credit += l.credit;
-              });
-            });
-            const balance = debit - credit;
-            return {
-              code: acc.code,
-              name: acc.name,
-              debit: debit.toLocaleString(),
-              credit: credit.toLocaleString(),
-              debtor: balance > 0 ? balance.toLocaleString() : 0,
-              creditor: balance < 0 ? Math.abs(balance).toLocaleString() : 0
-            };
-          }).filter(r => r.debit !== '0' || r.credit !== '0')} // Hide unused accounts
+        <LibroMayorView
+          entries={journalEntries}
+          accounts={INITIAL_ACCOUNTS}
           onBack={() => setCurrentView(AppView.DASHBOARD)}
         />
       )}
