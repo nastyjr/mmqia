@@ -1,11 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../services/supabaseClient';
-import { journalEntriesService, bankTransactionsService, reconciliationMatchesService, JournalEntryDB } from '../services/databaseService';
 import { JournalEntry } from '../types';
 import { useAuth } from './AuthContext';
 import { useCompany } from './CompanyContext';
 
-// LocalStorage keys for offline fallback
+// LocalStorage keys
 const LS_JOURNAL_ENTRIES = 'accounting_journal_entries';
 const LS_BANK_TRANSACTIONS = 'accounting_bank_transactions';
 
@@ -39,7 +37,8 @@ export const AccountingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const [bankTransactions, setBankTransactions] = useState<any[]>([]);
     const [reconciliationMatches, setReconciliationMatches] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [isOfflineMode, setIsOfflineMode] = useState(false);
+    // Default to true - only use Supabase if explicitly successful
+    const [isOfflineMode, setIsOfflineMode] = useState(true);
 
     // Load from localStorage
     const loadFromLocalStorage = () => {
@@ -67,20 +66,33 @@ export const AccountingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
     };
 
+    // Simple Supabase check - try to import dynamically to avoid fetch errors
+    const trySupabaseFetch = async () => {
+        try {
+            // Dynamic import to handle cases where Supabase is not configured
+            const { journalEntriesService } = await import('../services/databaseService');
+            const data = await journalEntriesService.getAll();
+            return data;
+        } catch (error) {
+            console.warn('Supabase fetch failed:', error);
+            return null;
+        }
+    };
+
     const fetchEntries = async () => {
+        // Always load from localStorage first
+        loadFromLocalStorage();
+
         if (!user) {
-            // If no user, try to load from localStorage anyway (demo mode)
-            loadFromLocalStorage();
             setIsOfflineMode(true);
             return;
         }
 
         try {
             setLoading(true);
+            const entriesData = await trySupabaseFetch();
 
-            // 1. Fetch Journal Entries from Supabase
-            const entriesData = await journalEntriesService.getAll();
-            if (entriesData) {
+            if (entriesData && entriesData.length > 0) {
                 const entries: JournalEntry[] = entriesData.map((d: any) => {
                     const sanitizedLines = (d.lines || []).map((line: any) => ({
                         ...line,
@@ -102,21 +114,12 @@ export const AccountingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                     };
                 });
                 setJournalEntries(entries);
-                saveToLocalStorage(entries); // Sync to localStorage
-                setIsOfflineMode(false);
+                saveToLocalStorage(entries);
+                setIsOfflineMode(false); // Only set to online if fetch succeeded
             }
-
-            // 2. Fetch Bank Transactions
-            const bankData = await bankTransactionsService.getAll();
-            if (bankData) setBankTransactions(bankData);
-
-            // 3. Fetch Matches
-            const matchesData = await reconciliationMatchesService.getAll();
-            if (matchesData) setReconciliationMatches(matchesData);
         } catch (error: any) {
-            console.warn('Error fetching from Supabase, falling back to localStorage:', error.message);
-            loadFromLocalStorage();
-            setIsOfflineMode(true);
+            console.warn('Error fetching from Supabase, using localStorage:', error.message);
+            // Keep isOfflineMode as true (default)
         } finally {
             setLoading(false);
         }
@@ -134,7 +137,7 @@ export const AccountingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             createdAt: newEntry.createdAt || new Date().toISOString()
         };
 
-        // Always update local state first for responsiveness
+        // Always save to local state and localStorage first (offline-first)
         setJournalEntries(prev => {
             const exists = prev.some(e => e.id === entryWithId.id);
             let updated: JournalEntry[];
@@ -147,10 +150,11 @@ export const AccountingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             return updated;
         });
 
-        // Try to save to Supabase if user is logged in
-        if (user && !isOfflineMode) {
+        // Try Supabase in background only if not in offline mode
+        if (!isOfflineMode && user) {
             try {
-                const entryPayload: JournalEntryDB = {
+                const { journalEntriesService } = await import('../services/databaseService');
+                const entryPayload = {
                     date: entryWithId.date,
                     type: entryWithId.type,
                     glosa: entryWithId.glosa,
@@ -158,64 +162,60 @@ export const AccountingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                     lines: entryWithId.lines
                 };
 
-                const existsInDB = journalEntries.some(e => e.id === newEntry.id);
-                if (existsInDB && newEntry.id) {
+                // Check if it's an update or create
+                if (newEntry.id && journalEntries.some(e => e.id === newEntry.id)) {
                     await journalEntriesService.update(newEntry.id, entryPayload);
                 } else {
                     await journalEntriesService.create(entryPayload);
                 }
-                // Refresh from server to get the DB-generated ID
-                await fetchEntries();
             } catch (error: any) {
-                console.warn('Error saving to Supabase (saved locally):', error.message);
+                console.warn('Supabase save failed (saved locally):', error.message);
                 setIsOfflineMode(true);
-                // Entry is already saved locally, so no need to show error
             }
         }
+
+        // No error thrown - entry is saved locally regardless
     };
 
     const updateEntry = async (entry: JournalEntry) => {
         if (!entry.id) return;
 
-        // Update local state
         setJournalEntries(prev => {
             const updated = prev.map(e => e.id === entry.id ? entry : e);
             saveToLocalStorage(updated);
             return updated;
         });
 
-        // Try Supabase
-        if (user && !isOfflineMode) {
+        if (!isOfflineMode && user) {
             try {
-                const entryPayload: JournalEntryDB = {
+                const { journalEntriesService } = await import('../services/databaseService');
+                await journalEntriesService.update(entry.id, {
                     date: entry.date,
                     type: entry.type,
                     glosa: entry.glosa,
                     total: entry.total,
                     lines: entry.lines
-                };
-                await journalEntriesService.update(entry.id, entryPayload);
+                });
             } catch (error: any) {
-                console.warn('Error updating in Supabase (updated locally):', error.message);
+                console.warn('Supabase update failed (updated locally):', error.message);
                 setIsOfflineMode(true);
             }
         }
     };
 
     const deleteEntry = async (id: string) => {
-        // Delete from local state
         setJournalEntries(prev => {
             const updated = prev.filter(e => e.id !== id);
             saveToLocalStorage(updated);
             return updated;
         });
 
-        // Try Supabase
-        if (user && !isOfflineMode) {
+        if (!isOfflineMode && user) {
             try {
+                const { journalEntriesService } = await import('../services/databaseService');
                 await journalEntriesService.delete(id);
             } catch (error: any) {
-                console.warn('Error deleting from Supabase (deleted locally):', error.message);
+                console.warn('Supabase delete failed (deleted locally):', error.message);
                 setIsOfflineMode(true);
             }
         }
@@ -223,24 +223,11 @@ export const AccountingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     const addBankTransaction = async (tx: any) => {
         setBankTransactions(prev => [...prev, tx]);
-        if (user && !isOfflineMode) {
-            try {
-                await bankTransactionsService.create(tx);
-            } catch (error) {
-                console.warn('Error saving bank transaction to Supabase');
-            }
-        }
+        // Background Supabase sync not critical for bank transactions
     };
 
     const addReconciliationMatch = async (match: any) => {
         setReconciliationMatches(prev => [...prev, match]);
-        if (user && !isOfflineMode) {
-            try {
-                await reconciliationMatchesService.create(match);
-            } catch (error) {
-                console.warn('Error saving reconciliation match to Supabase');
-            }
-        }
     };
 
     return (
