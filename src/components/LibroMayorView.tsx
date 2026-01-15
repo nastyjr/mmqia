@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { JournalEntry, Account } from '../types';
-import { Search, ArrowLeft, Download, ChevronRight, FileSpreadsheet } from 'lucide-react';
+import { Search, ArrowLeft, Download, ChevronRight, FileSpreadsheet, Printer, Calendar, X } from 'lucide-react';
 
 interface LibroMayorViewProps {
     entries: JournalEntry[];
@@ -31,6 +31,17 @@ export const LibroMayorView: React.FC<LibroMayorViewProps> = ({
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
     const [showOnlyWithMovements, setShowOnlyWithMovements] = useState(true);
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
+
+    // Filter entries by date range first
+    const filteredEntries = useMemo(() => {
+        return entries.filter(e => {
+            if (dateFrom && e.date < dateFrom) return false;
+            if (dateTo && e.date > dateTo) return false;
+            return true;
+        });
+    }, [entries, dateFrom, dateTo]);
 
     const accountSummaries = useMemo((): AccountSummary[] => {
         const summaryMap = new Map<string, AccountSummary>();
@@ -46,7 +57,7 @@ export const LibroMayorView: React.FC<LibroMayorViewProps> = ({
             });
         });
 
-        const sortedEntries = [...entries].sort((a, b) =>
+        const sortedEntries = [...filteredEntries].sort((a, b) =>
             new Date(a.date).getTime() - new Date(b.date).getTime()
         );
 
@@ -80,7 +91,7 @@ export const LibroMayorView: React.FC<LibroMayorViewProps> = ({
         });
 
         return Array.from(summaryMap.values()).sort((a, b) => a.code.localeCompare(b.code));
-    }, [entries, accounts]);
+    }, [filteredEntries, accounts]);
 
     const filteredAccounts = useMemo(() => {
         return accountSummaries.filter(acc => {
@@ -117,99 +128,155 @@ export const LibroMayorView: React.FC<LibroMayorViewProps> = ({
         link.click();
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const clearDateFilter = () => {
+        setDateFrom('');
+        setDateTo('');
+    };
+
     return (
-        <div className="flex h-full bg-gray-50">
+        <div className="flex h-full bg-slate-50 print:bg-white">
             {/* Left Panel - Account List */}
-            <div className="w-96 bg-white border-r flex flex-col">
+            <div className="w-[340px] bg-white border-r border-slate-200 flex flex-col print:hidden">
                 {/* Header */}
-                <div className="p-4 border-b">
-                    <div className="flex items-center justify-between mb-3">
-                        <h1 className="text-lg font-semibold text-gray-900">Libro Mayor</h1>
+                <div className="px-4 pt-4 pb-3 border-b border-slate-100">
+                    <div className="flex items-center justify-between mb-1">
+                        <h1 className="text-base font-semibold text-slate-800">Libro Mayor</h1>
                         <button
                             onClick={onBack}
-                            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                            className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100"
                         >
-                            <ArrowLeft size={14} /> Volver
+                            <ArrowLeft size={12} /> Volver
                         </button>
                     </div>
+                    <p className="text-[11px] text-slate-400">Saldos acumulados por cuenta</p>
+                </div>
+
+                {/* Date Filter */}
+                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center gap-1 text-[11px] text-slate-500 mb-2">
+                        <Calendar size={11} />
+                        <span>Período</span>
+                        {(dateFrom || dateTo) && (
+                            <button onClick={clearDateFilter} className="ml-auto text-slate-400 hover:text-slate-600">
+                                <X size={12} />
+                            </button>
+                        )}
+                    </div>
+                    <div className="flex gap-2">
+                        <input
+                            type="date"
+                            value={dateFrom}
+                            onChange={(e) => setDateFrom(e.target.value)}
+                            className="flex-1 px-2 py-1.5 text-xs border border-slate-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <input
+                            type="date"
+                            value={dateTo}
+                            onChange={(e) => setDateTo(e.target.value)}
+                            className="flex-1 px-2 py-1.5 text-xs border border-slate-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                    </div>
+                </div>
+
+                {/* Search */}
+                <div className="px-4 py-3 border-b border-slate-100">
                     <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 text-gray-400" size={14} />
+                        <Search className="absolute left-2.5 top-2 text-slate-400" size={13} />
                         <input
                             type="text"
-                            placeholder="Buscar cuenta..."
-                            className="w-full pl-8 pr-3 py-2 text-sm bg-gray-50 border-0 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white"
+                            placeholder="Buscar por código o nombre..."
+                            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <label className="flex items-center gap-2 mt-2 text-xs text-gray-500 cursor-pointer">
+                    <label className="flex items-center gap-2 mt-2.5 text-[11px] text-slate-500 cursor-pointer select-none">
                         <input
                             type="checkbox"
                             checked={showOnlyWithMovements}
                             onChange={(e) => setShowOnlyWithMovements(e.target.checked)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
                         />
-                        Solo con movimientos
+                        Mostrar solo cuentas con movimientos
                     </label>
                 </div>
 
                 {/* Account List */}
                 <div className="flex-1 overflow-auto">
                     {filteredAccounts.length === 0 ? (
-                        <div className="p-8 text-center text-gray-400 text-sm">
-                            No hay cuentas
+                        <div className="p-8 text-center text-slate-400 text-xs">
+                            Sin resultados
                         </div>
                     ) : (
-                        <div className="divide-y divide-gray-100">
-                            {filteredAccounts.map((acc) => (
+                        <div>
+                            {filteredAccounts.map((acc, idx) => (
                                 <button
                                     key={acc.code}
                                     onClick={() => setSelectedAccount(acc.code)}
-                                    className={`w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${selectedAccount === acc.code ? 'bg-blue-50 border-l-2 border-blue-600' : ''
+                                    className={`w-full px-4 py-2.5 text-left flex items-center gap-3 border-b border-slate-50 transition-all ${selectedAccount === acc.code
+                                            ? 'bg-blue-50 border-l-2 border-l-blue-600'
+                                            : 'hover:bg-slate-50 border-l-2 border-l-transparent'
                                         }`}
                                 >
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-mono text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                                        <div className="flex items-center gap-2 mb-0.5">
+                                            <code className="text-[10px] font-medium text-blue-700 bg-blue-100/60 px-1.5 py-0.5 rounded">
                                                 {acc.code}
-                                            </span>
-                                            <span className="text-xs text-gray-400">
-                                                {acc.transactions.length} mov
-                                            </span>
+                                            </code>
+                                            {acc.transactions.length > 0 && (
+                                                <span className="text-[9px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                                                    {acc.transactions.length}
+                                                </span>
+                                            )}
                                         </div>
-                                        <p className="text-sm text-gray-900 truncate mt-1">{acc.name}</p>
+                                        <p className="text-xs text-slate-700 truncate leading-tight">{acc.name}</p>
                                     </div>
-                                    <div className="text-right ml-3">
-                                        <p className={`text-sm font-medium ${acc.balance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
-                                            {fmt(Math.abs(acc.balance))}
+                                    <div className="text-right flex-shrink-0">
+                                        <p className={`text-xs font-medium tabular-nums ${acc.balance > 0 ? 'text-slate-800' : acc.balance < 0 ? 'text-red-600' : 'text-slate-400'
+                                            }`}>
+                                            {acc.balance !== 0 ? fmt(Math.abs(acc.balance)) : '-'}
                                         </p>
-                                        <p className="text-[10px] text-gray-400 uppercase">
-                                            {acc.balance > 0 ? 'Deudor' : acc.balance < 0 ? 'Acreedor' : ''}
-                                        </p>
+                                        {acc.balance !== 0 && (
+                                            <p className="text-[9px] text-slate-400 mt-0.5">
+                                                {acc.balance > 0 ? 'D' : 'A'}
+                                            </p>
+                                        )}
                                     </div>
-                                    <ChevronRight size={14} className="text-gray-300 ml-2 flex-shrink-0" />
+                                    <ChevronRight size={12} className="text-slate-300 flex-shrink-0" />
                                 </button>
                             ))}
                         </div>
                     )}
                 </div>
 
-                {/* Footer Totals */}
-                <div className="p-3 border-t bg-gray-50 text-xs">
-                    <div className="flex justify-between text-gray-500">
-                        <span>Total Débitos:</span>
-                        <span className="font-mono">{fmt(totals.debit)}</span>
+                {/* Footer */}
+                <div className="px-4 py-3 border-t border-slate-200 bg-slate-50/80 space-y-2">
+                    <div className="flex justify-between text-[11px]">
+                        <span className="text-slate-500">Débitos</span>
+                        <span className="font-medium text-slate-700 tabular-nums">{fmt(totals.debit)}</span>
                     </div>
-                    <div className="flex justify-between text-gray-500 mt-1">
-                        <span>Total Créditos:</span>
-                        <span className="font-mono">{fmt(totals.credit)}</span>
+                    <div className="flex justify-between text-[11px]">
+                        <span className="text-slate-500">Créditos</span>
+                        <span className="font-medium text-slate-700 tabular-nums">{fmt(totals.credit)}</span>
                     </div>
-                    <button
-                        onClick={exportCSV}
-                        className="w-full mt-3 py-1.5 text-center bg-white border border-gray-200 rounded text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1"
-                    >
-                        <Download size={12} /> Exportar CSV
-                    </button>
+                    <div className="flex gap-2 pt-2">
+                        <button
+                            onClick={exportCSV}
+                            className="flex-1 py-1.5 text-[11px] text-center bg-white border border-slate-200 rounded text-slate-600 hover:bg-slate-50 flex items-center justify-center gap-1.5 transition-colors"
+                        >
+                            <Download size={11} /> CSV
+                        </button>
+                        <button
+                            onClick={handlePrint}
+                            className="flex-1 py-1.5 text-[11px] text-center bg-white border border-slate-200 rounded text-slate-600 hover:bg-slate-50 flex items-center justify-center gap-1.5 transition-colors"
+                        >
+                            <Printer size={11} /> Imprimir
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -218,69 +285,73 @@ export const LibroMayorView: React.FC<LibroMayorViewProps> = ({
                 {selectedAccountData ? (
                     <>
                         {/* Account Header */}
-                        <div className="bg-white border-b px-6 py-4">
+                        <div className="bg-white border-b border-slate-200 px-6 py-5 print:px-0 print:py-4">
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-mono text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                            {selectedAccountData.code}
-                                        </span>
-                                    </div>
-                                    <h2 className="text-lg font-medium text-gray-900 mt-2">
+                                    <code className="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                                        {selectedAccountData.code}
+                                    </code>
+                                    <h2 className="text-lg font-medium text-slate-800 mt-2 leading-tight">
                                         {selectedAccountData.name}
                                     </h2>
+                                    {(dateFrom || dateTo) && (
+                                        <p className="text-[11px] text-slate-400 mt-1">
+                                            Período: {dateFrom || '∞'} — {dateTo || '∞'}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-2xl font-semibold text-gray-900">
+                                    <p className={`text-2xl font-semibold tabular-nums ${selectedAccountData.balance >= 0 ? 'text-slate-800' : 'text-red-600'
+                                        }`}>
                                         {fmt(Math.abs(selectedAccountData.balance))}
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <p className="text-[11px] text-slate-500 mt-0.5">
                                         Saldo {selectedAccountData.balance >= 0 ? 'Deudor' : 'Acreedor'}
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex gap-6 mt-4 text-sm">
+                            <div className="flex gap-8 mt-4 pt-4 border-t border-slate-100">
                                 <div>
-                                    <span className="text-gray-500">Débitos: </span>
-                                    <span className="font-medium">{fmt(selectedAccountData.totalDebit)}</span>
+                                    <p className="text-[11px] text-slate-400 uppercase tracking-wide">Débitos</p>
+                                    <p className="text-sm font-medium text-slate-700 tabular-nums mt-0.5">{fmt(selectedAccountData.totalDebit)}</p>
                                 </div>
                                 <div>
-                                    <span className="text-gray-500">Créditos: </span>
-                                    <span className="font-medium">{fmt(selectedAccountData.totalCredit)}</span>
+                                    <p className="text-[11px] text-slate-400 uppercase tracking-wide">Créditos</p>
+                                    <p className="text-sm font-medium text-slate-700 tabular-nums mt-0.5">{fmt(selectedAccountData.totalCredit)}</p>
                                 </div>
                                 <div>
-                                    <span className="text-gray-500">Movimientos: </span>
-                                    <span className="font-medium">{selectedAccountData.transactions.length}</span>
+                                    <p className="text-[11px] text-slate-400 uppercase tracking-wide">Movimientos</p>
+                                    <p className="text-sm font-medium text-slate-700 mt-0.5">{selectedAccountData.transactions.length}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Transactions Table */}
-                        <div className="flex-1 overflow-auto p-6">
+                        <div className="flex-1 overflow-auto">
                             <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="text-left text-xs text-gray-500 uppercase tracking-wider border-b">
-                                        <th className="pb-3 font-medium">Fecha</th>
-                                        <th className="pb-3 font-medium">Descripción</th>
-                                        <th className="pb-3 font-medium text-right">Debe</th>
-                                        <th className="pb-3 font-medium text-right">Haber</th>
-                                        <th className="pb-3 font-medium text-right">Saldo</th>
+                                <thead className="sticky top-0 bg-slate-100/95 backdrop-blur-sm print:bg-slate-100">
+                                    <tr className="text-left text-[11px] text-slate-500 uppercase tracking-wide">
+                                        <th className="px-6 py-3 font-medium w-28">Fecha</th>
+                                        <th className="px-4 py-3 font-medium">Descripción</th>
+                                        <th className="px-4 py-3 font-medium text-right w-28">Debe</th>
+                                        <th className="px-4 py-3 font-medium text-right w-28">Haber</th>
+                                        <th className="px-6 py-3 font-medium text-right w-32">Saldo</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100">
+                                <tbody className="bg-white divide-y divide-slate-100">
                                     {selectedAccountData.transactions.map((tx, i) => (
-                                        <tr key={i} className="hover:bg-gray-50">
-                                            <td className="py-3 font-mono text-gray-600 w-28">
+                                        <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-3 font-mono text-xs text-slate-500">
                                                 {new Date(tx.date).toLocaleDateString('es-CL')}
                                             </td>
-                                            <td className="py-3 text-gray-900">{tx.glosa}</td>
-                                            <td className="py-3 text-right font-mono text-green-700 w-28">
+                                            <td className="px-4 py-3 text-slate-700">{tx.glosa}</td>
+                                            <td className="px-4 py-3 text-right font-mono tabular-nums text-emerald-600">
                                                 {tx.debit > 0 ? fmt(tx.debit) : ''}
                                             </td>
-                                            <td className="py-3 text-right font-mono text-red-600 w-28">
+                                            <td className="px-4 py-3 text-right font-mono tabular-nums text-rose-500">
                                                 {tx.credit > 0 ? fmt(tx.credit) : ''}
                                             </td>
-                                            <td className="py-3 text-right font-mono font-medium w-28">
+                                            <td className="px-6 py-3 text-right font-mono tabular-nums font-medium text-slate-800">
                                                 {fmt(tx.runningBalance)}
                                             </td>
                                         </tr>
@@ -290,11 +361,13 @@ export const LibroMayorView: React.FC<LibroMayorViewProps> = ({
                         </div>
                     </>
                 ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-                        <FileSpreadsheet size={48} strokeWidth={1} className="mb-4" />
-                        <p className="text-lg">Selecciona una cuenta</p>
-                        <p className="text-sm mt-1">
-                            {filteredAccounts.length} cuentas disponibles
+                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400 print:hidden">
+                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                            <FileSpreadsheet size={28} strokeWidth={1.5} />
+                        </div>
+                        <p className="text-base font-medium text-slate-500">Selecciona una cuenta</p>
+                        <p className="text-xs text-slate-400 mt-1">
+                            {filteredAccounts.length} cuentas con movimientos
                         </p>
                     </div>
                 )}
