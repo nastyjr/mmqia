@@ -407,7 +407,15 @@ export const AccountingEntryForm: React.FC<AccountingEntryFormProps> = ({
                     </div>
                     <div className="col-span-2">
                         <label className={labelClass}>Otro Impuesto:</label>
-                        <select className={selectClass}><option>Seleccione</option></select>
+                        <select className={selectClass}>
+                            <option value="">Seleccione</option>
+                            <option value="impuesto_adicional">Impuesto Adicional</option>
+                            <option value="impuesto_especifico">Impuesto Específico Combustible</option>
+                            <option value="impuesto_licores">Impuesto a Licores (ILA)</option>
+                            <option value="impuesto_tabaco">Impuesto al Tabaco</option>
+                            <option value="impuesto_verde">Impuesto Verde (CO2)</option>
+                            <option value="retencion_honorarios">Retención Honorarios (15.25%)</option>
+                        </select>
                     </div>
                 </div>
 
@@ -472,10 +480,37 @@ export const AccountingEntryForm: React.FC<AccountingEntryFormProps> = ({
                                         />
                                     </td>
 
-                                    {/* Auxiliar, Doc, Folio (Simple inputs for now) */}
-                                    <td className="px-4 py-2"><input type="text" className="w-full outline-none text-xs bg-transparent" placeholder="-" /></td>
-                                    <td className="px-4 py-2"><input type="text" className="w-full outline-none text-xs bg-transparent" placeholder="-" /></td>
-                                    <td className="px-4 py-2"><input type="text" className="w-full outline-none text-xs bg-transparent" placeholder="-" /></td>
+                                    {/* Auxiliar - RUT of the entity for this line */}
+                                    <td className="px-4 py-2">
+                                        <input
+                                            type="text"
+                                            className="w-full outline-none text-xs bg-transparent"
+                                            placeholder="RUT auxiliar"
+                                            value={line.rut || ''}
+                                            onChange={(e) => updateLine(line.id, 'rut', e.target.value)}
+                                        />
+                                    </td>
+                                    {/* Documento */}
+                                    <td className="px-4 py-2">
+                                        <select
+                                            className="w-full outline-none text-xs bg-transparent"
+                                            value={line.documentType || ''}
+                                            onChange={(e) => updateLine(line.id, 'documentType', e.target.value)}
+                                        >
+                                            <option value="">-</option>
+                                            {DOC_TYPES.map(d => <option key={d} value={d}>{d}</option>)}
+                                        </select>
+                                    </td>
+                                    {/* Folio */}
+                                    <td className="px-4 py-2">
+                                        <input
+                                            type="text"
+                                            className="w-full outline-none text-xs bg-transparent"
+                                            placeholder="Número"
+                                            value={line.documentNumber || ''}
+                                            onChange={(e) => updateLine(line.id, 'documentNumber', e.target.value)}
+                                        />
+                                    </td>
 
                                     {/* DEBIT */}
                                     <td className="px-4 py-2">
