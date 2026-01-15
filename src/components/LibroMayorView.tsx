@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { JournalEntry, Account } from '../types';
 import { Button } from './Button';
-import { Search, ArrowLeft, Download, Printer, BookOpen, ChevronDown, ChevronUp, Calculator, Filter } from 'lucide-react';
+import { Search, ArrowLeft, Download, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface LibroMayorViewProps {
     entries: JournalEntry[];
@@ -31,13 +31,12 @@ export const LibroMayorView: React.FC<LibroMayorViewProps> = ({
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedAccount, setExpandedAccount] = useState<string | null>(null);
-    const [filterType, setFilterType] = useState<'all' | 'withBalance' | 'withMovements'>('withMovements');
+    const [showOnlyWithMovements, setShowOnlyWithMovements] = useState(true);
 
     // Calculate account summaries from journal entries
     const accountSummaries = useMemo((): AccountSummary[] => {
         const summaryMap = new Map<string, AccountSummary>();
 
-        // Initialize all accounts
         accounts.forEach(acc => {
             summaryMap.set(acc.code, {
                 code: acc.code,
@@ -49,7 +48,6 @@ export const LibroMayorView: React.FC<LibroMayorViewProps> = ({
             });
         });
 
-        // Process all journal entries sorted by date
         const sortedEntries = [...entries].sort((a, b) =>
             new Date(a.date).getTime() - new Date(b.date).getTime()
         );
@@ -58,11 +56,10 @@ export const LibroMayorView: React.FC<LibroMayorViewProps> = ({
             entry.lines.forEach(line => {
                 let summary = summaryMap.get(line.accountId);
 
-                // If account doesn't exist in list, create it
                 if (!summary) {
                     summary = {
                         code: line.accountId,
-                        name: line.accountName || 'Cuenta no encontrada',
+                        name: line.accountName || 'Sin nombre',
                         totalDebit: 0,
                         totalCredit: 0,
                         balance: 0,
@@ -71,7 +68,6 @@ export const LibroMayorView: React.FC<LibroMayorViewProps> = ({
                     summaryMap.set(line.accountId, summary);
                 }
 
-                // Add transaction
                 summary.totalDebit += line.debit || 0;
                 summary.totalCredit += line.credit || 0;
                 summary.balance = summary.totalDebit - summary.totalCredit;
@@ -89,57 +85,31 @@ export const LibroMayorView: React.FC<LibroMayorViewProps> = ({
         return Array.from(summaryMap.values()).sort((a, b) => a.code.localeCompare(b.code));
     }, [entries, accounts]);
 
-    // Filter accounts based on search and filter type
     const filteredAccounts = useMemo(() => {
         return accountSummaries.filter(acc => {
-            // Search filter
             const matchesSearch =
                 acc.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 acc.name.toLowerCase().includes(searchTerm.toLowerCase());
-
-            // Type filter
-            let matchesFilter = true;
-            if (filterType === 'withBalance') {
-                matchesFilter = acc.balance !== 0;
-            } else if (filterType === 'withMovements') {
-                matchesFilter = acc.transactions.length > 0;
-            }
-
-            return matchesSearch && matchesFilter;
+            const hasMovements = !showOnlyWithMovements || acc.transactions.length > 0;
+            return matchesSearch && hasMovements;
         });
-    }, [accountSummaries, searchTerm, filterType]);
+    }, [accountSummaries, searchTerm, showOnlyWithMovements]);
 
-    // Calculate totals
     const totals = useMemo(() => {
         return filteredAccounts.reduce((acc, item) => ({
             debit: acc.debit + item.totalDebit,
             credit: acc.credit + item.totalCredit,
-            debtorBalance: acc.debtorBalance + (item.balance > 0 ? item.balance : 0),
-            creditorBalance: acc.creditorBalance + (item.balance < 0 ? Math.abs(item.balance) : 0)
-        }), { debit: 0, credit: 0, debtorBalance: 0, creditorBalance: 0 });
+        }), { debit: 0, credit: 0 });
     }, [filteredAccounts]);
 
-    const formatCurrency = (amount: number) => {
-        return amount.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-    };
+    const fmt = (n: number) => n === 0 ? '-' : n.toLocaleString('es-CL');
 
-    const exportToCSV = () => {
-        const headers = ['Código', 'Cuenta', 'Débitos', 'Créditos', 'Saldo Deudor', 'Saldo Acreedor'];
-        const rows = filteredAccounts.map(acc => [
-            acc.code,
-            acc.name,
-            acc.totalDebit,
-            acc.totalCredit,
-            acc.balance > 0 ? acc.balance : 0,
-            acc.balance < 0 ? Math.abs(acc.balance) : 0
-        ]);
-
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(r => r.join(','))
+    const exportCSV = () => {
+        const rows = [
+            ['Código', 'Cuenta', 'Débitos', 'Créditos', 'Saldo'].join(','),
+            ...filteredAccounts.map(a => [a.code, `"${a.name}"`, a.totalDebit, a.totalCredit, a.balance].join(','))
         ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([rows], { type: 'text/csv' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = `libro_mayor_${new Date().toISOString().split('T')[0]}.csv`;
@@ -147,211 +117,132 @@ export const LibroMayorView: React.FC<LibroMayorViewProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full animate-in fade-in duration-300">
+        <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-4 pb-4 border-b">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                        <BookOpen className="text-blue-600" size={28} />
-                        Libro Mayor
-                    </h2>
-                    <p className="text-gray-500">Saldos acumulados por cuenta contable</p>
+                    <h2 className="text-xl font-semibold text-gray-900">Libro Mayor</h2>
+                    <p className="text-sm text-gray-500">Saldos por cuenta contable</p>
                 </div>
-                <div className="flex space-x-3">
-                    <button
-                        onClick={onBack}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-300 transition-colors flex items-center gap-2"
-                    >
-                        <ArrowLeft size={16} /> Volver
+                <div className="flex gap-2">
+                    <button onClick={onBack} className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded">
+                        <ArrowLeft size={16} className="inline mr-1" /> Volver
                     </button>
-                    <button
-                        onClick={() => window.print()}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md font-medium hover:bg-gray-200 transition-colors flex items-center gap-2"
-                    >
-                        <Printer size={16} /> Imprimir
-                    </button>
-                    <Button onClick={exportToCSV}>
-                        <Download size={16} className="mr-2" /> Exportar Excel
+                    <Button onClick={exportCSV} variant="secondary" className="text-sm">
+                        <Download size={14} className="mr-1" /> CSV
                     </Button>
                 </div>
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg">
-                    <p className="text-blue-100 text-sm">Total Débitos</p>
-                    <p className="text-2xl font-bold">{formatCurrency(totals.debit)}</p>
-                </div>
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white shadow-lg">
-                    <p className="text-purple-100 text-sm">Total Créditos</p>
-                    <p className="text-2xl font-bold">{formatCurrency(totals.credit)}</p>
-                </div>
-                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white shadow-lg">
-                    <p className="text-green-100 text-sm">Saldos Deudores</p>
-                    <p className="text-2xl font-bold">{formatCurrency(totals.debtorBalance)}</p>
-                </div>
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-4 text-white shadow-lg">
-                    <p className="text-orange-100 text-sm">Saldos Acreedores</p>
-                    <p className="text-2xl font-bold">{formatCurrency(totals.creditorBalance)}</p>
-                </div>
-            </div>
-
-            {/* Search and Filter Bar */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex gap-4">
-                <div className="relative flex-grow">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-gray-400" />
-                    </div>
+            {/* Filters */}
+            <div className="flex gap-4 items-center mb-4">
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-2.5 top-2 text-gray-400" size={16} />
                     <input
                         type="text"
-                        placeholder="Buscar por código o nombre de cuenta..."
-                        className="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Buscar cuenta..."
+                        className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded focus:outline-none focus:border-blue-500"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <Filter size={16} className="text-gray-500" />
-                    <select
-                        value={filterType}
-                        onChange={(e) => setFilterType(e.target.value as any)}
-                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option value="all">Todas las cuentas</option>
-                        <option value="withMovements">Con movimientos</option>
-                        <option value="withBalance">Con saldo</option>
-                    </select>
-                </div>
+                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={showOnlyWithMovements}
+                        onChange={(e) => setShowOnlyWithMovements(e.target.checked)}
+                        className="rounded border-gray-300"
+                    />
+                    Solo con movimientos
+                </label>
+                <span className="text-xs text-gray-400 ml-auto">{filteredAccounts.length} cuentas</span>
             </div>
 
-            {/* Accounts Count */}
-            <div className="mb-4 text-sm text-gray-600 flex items-center gap-2">
-                <Calculator size={16} />
-                <span>Mostrando <strong>{filteredAccounts.length}</strong> cuentas del plan de cuentas</span>
-            </div>
-
-            {/* Accounts List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-grow">
-                <div className="overflow-auto max-h-[calc(100vh-450px)]">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50 sticky top-0 z-10">
+            {/* Table */}
+            <div className="flex-1 overflow-auto border border-gray-200 rounded">
+                <table className="w-full text-sm">
+                    <thead className="bg-gray-50 sticky top-0">
+                        <tr className="border-b border-gray-200">
+                            <th className="text-left px-3 py-2 font-medium text-gray-600 w-24">Código</th>
+                            <th className="text-left px-3 py-2 font-medium text-gray-600">Cuenta</th>
+                            <th className="text-right px-3 py-2 font-medium text-gray-600 w-28">Débitos</th>
+                            <th className="text-right px-3 py-2 font-medium text-gray-600 w-28">Créditos</th>
+                            <th className="text-right px-3 py-2 font-medium text-gray-600 w-28">Saldo</th>
+                            <th className="w-10"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredAccounts.length === 0 ? (
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-28">Código</th>
-                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Cuenta</th>
-                                <th className="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider w-32">Débitos</th>
-                                <th className="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider w-32">Créditos</th>
-                                <th className="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider w-32">Saldo Deudor</th>
-                                <th className="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider w-32">Saldo Acreedor</th>
-                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider w-20">Detalle</th>
+                                <td colSpan={6} className="text-center py-12 text-gray-400">
+                                    No hay cuentas con movimientos
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredAccounts.length === 0 ? (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-16 text-center text-gray-500">
-                                        <BookOpen className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                                        <p className="font-medium">No hay cuentas con movimientos</p>
-                                        <p className="text-sm text-gray-400 mt-1">Los saldos aparecerán aquí cuando se registren asientos en el Libro Diario</p>
-                                    </td>
-                                </tr>
-                            ) : (
-                                filteredAccounts.map((acc) => (
-                                    <React.Fragment key={acc.code}>
-                                        <tr
-                                            className={`hover:bg-blue-50 transition-colors cursor-pointer ${expandedAccount === acc.code ? 'bg-blue-50' : ''}`}
-                                            onClick={() => setExpandedAccount(expandedAccount === acc.code ? null : acc.code)}
-                                        >
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <span className="font-mono text-sm font-bold text-blue-700">{acc.code}</span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className="text-sm text-gray-900 font-medium">{acc.name}</span>
-                                                {acc.transactions.length > 0 && (
-                                                    <span className="ml-2 text-xs text-gray-400">({acc.transactions.length} mov.)</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-mono text-sm">
-                                                {acc.totalDebit > 0 ? formatCurrency(acc.totalDebit) : '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-mono text-sm">
-                                                {acc.totalCredit > 0 ? formatCurrency(acc.totalCredit) : '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-mono text-sm font-bold text-green-700">
-                                                {acc.balance > 0 ? formatCurrency(acc.balance) : '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-mono text-sm font-bold text-red-700">
-                                                {acc.balance < 0 ? formatCurrency(Math.abs(acc.balance)) : '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                {acc.transactions.length > 0 && (
-                                                    <button className="text-blue-600 hover:text-blue-800">
-                                                        {expandedAccount === acc.code ? (
-                                                            <ChevronUp size={18} />
-                                                        ) : (
-                                                            <ChevronDown size={18} />
-                                                        )}
-                                                    </button>
-                                                )}
+                        ) : (
+                            filteredAccounts.map((acc) => (
+                                <React.Fragment key={acc.code}>
+                                    <tr
+                                        className={`border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${expandedAccount === acc.code ? 'bg-blue-50' : ''}`}
+                                        onClick={() => setExpandedAccount(expandedAccount === acc.code ? null : acc.code)}
+                                    >
+                                        <td className="px-3 py-2 font-mono text-blue-700">{acc.code}</td>
+                                        <td className="px-3 py-2 text-gray-900">{acc.name}</td>
+                                        <td className="px-3 py-2 text-right font-mono text-gray-700">{fmt(acc.totalDebit)}</td>
+                                        <td className="px-3 py-2 text-right font-mono text-gray-700">{fmt(acc.totalCredit)}</td>
+                                        <td className={`px-3 py-2 text-right font-mono font-medium ${acc.balance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
+                                            {fmt(Math.abs(acc.balance))}{acc.balance < 0 ? ' (A)' : acc.balance > 0 ? ' (D)' : ''}
+                                        </td>
+                                        <td className="px-2 text-gray-400">
+                                            {acc.transactions.length > 0 && (
+                                                expandedAccount === acc.code ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+                                            )}
+                                        </td>
+                                    </tr>
+
+                                    {expandedAccount === acc.code && acc.transactions.length > 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="bg-gray-50 px-6 py-3">
+                                                <table className="w-full text-xs">
+                                                    <thead>
+                                                        <tr className="text-gray-500">
+                                                            <th className="text-left py-1 w-24">Fecha</th>
+                                                            <th className="text-left py-1">Glosa</th>
+                                                            <th className="text-right py-1 w-24">Debe</th>
+                                                            <th className="text-right py-1 w-24">Haber</th>
+                                                            <th className="text-right py-1 w-24">Saldo</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {acc.transactions.map((tx, i) => (
+                                                            <tr key={i} className="border-t border-gray-100">
+                                                                <td className="py-1.5 font-mono text-gray-600">{new Date(tx.date).toLocaleDateString('es-CL')}</td>
+                                                                <td className="py-1.5 text-gray-700 truncate max-w-xs">{tx.glosa}</td>
+                                                                <td className="py-1.5 text-right font-mono">{tx.debit > 0 ? fmt(tx.debit) : ''}</td>
+                                                                <td className="py-1.5 text-right font-mono">{tx.credit > 0 ? fmt(tx.credit) : ''}</td>
+                                                                <td className="py-1.5 text-right font-mono font-medium">{fmt(tx.runningBalance)}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
                                             </td>
                                         </tr>
-
-                                        {/* Expanded Transaction Details */}
-                                        {expandedAccount === acc.code && acc.transactions.length > 0 && (
-                                            <tr>
-                                                <td colSpan={7} className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-4">
-                                                    <div className="text-xs font-bold text-gray-600 mb-3 uppercase">
-                                                        Movimientos de: {acc.name}
-                                                    </div>
-                                                    <table className="w-full text-xs border border-gray-200 rounded-lg overflow-hidden">
-                                                        <thead className="bg-white">
-                                                            <tr>
-                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">Fecha</th>
-                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">Glosa</th>
-                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Debe</th>
-                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Haber</th>
-                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Saldo</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="bg-white divide-y divide-gray-100">
-                                                            {acc.transactions.map((tx, idx) => (
-                                                                <tr key={idx} className="hover:bg-gray-50">
-                                                                    <td className="px-3 py-2 font-mono">{new Date(tx.date).toLocaleDateString('es-CL')}</td>
-                                                                    <td className="px-3 py-2 text-gray-700">{tx.glosa}</td>
-                                                                    <td className="px-3 py-2 text-right font-mono text-green-700">
-                                                                        {tx.debit > 0 ? formatCurrency(tx.debit) : ''}
-                                                                    </td>
-                                                                    <td className="px-3 py-2 text-right font-mono text-red-700">
-                                                                        {tx.credit > 0 ? formatCurrency(tx.credit) : ''}
-                                                                    </td>
-                                                                    <td className="px-3 py-2 text-right font-mono font-bold">
-                                                                        {formatCurrency(tx.runningBalance)}
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </React.Fragment>
-                                ))
-                            )}
-                        </tbody>
-                        {/* Totals Row */}
-                        {filteredAccounts.length > 0 && (
-                            <tfoot className="bg-gray-100 border-t-2 border-gray-300">
-                                <tr className="font-bold">
-                                    <td colSpan={2} className="px-4 py-3 text-right text-sm uppercase text-gray-700">Totales:</td>
-                                    <td className="px-4 py-3 text-right font-mono text-sm">{formatCurrency(totals.debit)}</td>
-                                    <td className="px-4 py-3 text-right font-mono text-sm">{formatCurrency(totals.credit)}</td>
-                                    <td className="px-4 py-3 text-right font-mono text-sm text-green-700">{formatCurrency(totals.debtorBalance)}</td>
-                                    <td className="px-4 py-3 text-right font-mono text-sm text-red-700">{formatCurrency(totals.creditorBalance)}</td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
+                                    )}
+                                </React.Fragment>
+                            ))
                         )}
-                    </table>
-                </div>
+                    </tbody>
+                    {filteredAccounts.length > 0 && (
+                        <tfoot className="bg-gray-100 border-t-2 border-gray-300">
+                            <tr className="font-medium">
+                                <td colSpan={2} className="px-3 py-2 text-right text-gray-600">Totales:</td>
+                                <td className="px-3 py-2 text-right font-mono">{fmt(totals.debit)}</td>
+                                <td className="px-3 py-2 text-right font-mono">{fmt(totals.credit)}</td>
+                                <td className="px-3 py-2 text-right font-mono">{fmt(totals.debit - totals.credit)}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    )}
+                </table>
             </div>
         </div>
     );
