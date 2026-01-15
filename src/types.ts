@@ -17,6 +17,7 @@ export interface JournalLine {
   debit: number; // Debe
   credit: number; // Haber
   rut?: string; // Para auxiliar (Cliente/Proveedor)
+  auxiliaryType?: string; // Tipo de libro auxiliar (CLIENTE, PROVEEDOR, BANCO, etc.)
   documentType?: string; // Fac, Bol, N/C
   documentNumber?: string; // Folio
   // New ERP Fields

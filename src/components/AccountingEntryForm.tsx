@@ -16,6 +16,18 @@ interface AccountingEntryFormProps {
 
 const DOC_TYPES = ['Factura Electrónica', 'Boleta', 'Nota de Crédito', 'Nota de Débito', 'Comprobante Contable'];
 
+// Tipos de Libro Auxiliar
+const AUXILIARY_BOOK_TYPES = [
+    { code: 'CLIENTE', name: 'Clientes' },
+    { code: 'PROVEEDOR', name: 'Proveedores' },
+    { code: 'BANCO', name: 'Bancos' },
+    { code: 'EMPLEADO', name: 'Empleados' },
+    { code: 'SOCIO', name: 'Socios/Accionistas' },
+    { code: 'CENTROCOSTO', name: 'Centro de Costo' },
+    { code: 'PROYECTO', name: 'Proyecto' },
+    { code: 'OTRO', name: 'Otro' }
+];
+
 // Fallback data if DB is empty
 const MOCK_ENTITIES = [
     { rut: '76.192.345-K', name: 'SODIMAC S.A.' },
@@ -86,6 +98,12 @@ export const AccountingEntryForm: React.FC<AccountingEntryFormProps> = ({
     const [showEntitySelector, setShowEntitySelector] = useState(false);
     const [entitySearchTerm, setEntitySearchTerm] = useState('');
     const [availableEntities, setAvailableEntities] = useState<{ rut: string, name: string }[]>(MOCK_ENTITIES);
+
+    // --- Auxiliary Book Selector State ---
+    const [showAuxiliaryModal, setShowAuxiliaryModal] = useState(false);
+    const [auxiliaryLineId, setAuxiliaryLineId] = useState<string | null>(null);
+    const [selectedAuxBookType, setSelectedAuxBookType] = useState<string>('');
+    const [auxSearchTerm, setAuxSearchTerm] = useState('');
 
     // --- Grid State ---
     // Initialize lines lazily to avoid issues if generateId fails during initial render
@@ -480,15 +498,25 @@ export const AccountingEntryForm: React.FC<AccountingEntryFormProps> = ({
                                         />
                                     </td>
 
-                                    {/* Auxiliar - RUT of the entity for this line */}
+                                    {/* Auxiliar - Click to open selector */}
                                     <td className="px-4 py-2">
-                                        <input
-                                            type="text"
-                                            className="w-full outline-none text-xs bg-transparent"
-                                            placeholder="RUT auxiliar"
-                                            value={line.rut || ''}
-                                            onChange={(e) => updateLine(line.id, 'rut', e.target.value)}
-                                        />
+                                        <button
+                                            type="button"
+                                            className="w-full text-left text-xs bg-transparent hover:bg-blue-50 px-1 py-0.5 rounded cursor-pointer transition-colors"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setAuxiliaryLineId(line.id);
+                                                setSelectedAuxBookType('');
+                                                setAuxSearchTerm('');
+                                                setShowAuxiliaryModal(true);
+                                            }}
+                                        >
+                                            {line.rut ? (
+                                                <span className="text-blue-600 font-medium">{line.auxiliaryType ? `[${line.auxiliaryType}] ` : ''}{line.rut}</span>
+                                            ) : (
+                                                <span className="text-gray-400 italic">Click para seleccionar...</span>
+                                            )}
+                                        </button>
                                     </td>
                                     {/* Documento */}
                                     <td className="px-4 py-2">
@@ -742,6 +770,111 @@ export const AccountingEntryForm: React.FC<AccountingEntryFormProps> = ({
                             </div>
                             <div className="p-3 bg-gray-50 border-t border-gray-200 text-xs text-center text-gray-500 rounded-b-lg">
                                 Seleccione una entidad para autocompletar el formulario
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- AUXILIARY BOOK SELECTOR MODAL --- */}
+                {showAuxiliaryModal && (
+                    <div className="absolute inset-0 z-[130] bg-gray-900/50 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
+                        <div className="bg-white rounded-lg shadow-2xl border border-gray-300 w-[600px] flex flex-col max-h-[600px]">
+                            <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-lg">
+                                <h3 className="font-bold text-white flex items-center gap-2">
+                                    <Building size={16} /> Selector de Libro Auxiliar
+                                </h3>
+                                <button type="button" onClick={() => setShowAuxiliaryModal(false)} className="text-white/80 hover:text-white">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            {/* Step 1: Select Book Type */}
+                            {!selectedAuxBookType ? (
+                                <div className="p-4">
+                                    <p className="text-sm text-gray-600 mb-4">Seleccione el tipo de libro auxiliar:</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {AUXILIARY_BOOK_TYPES.map(book => (
+                                            <button
+                                                key={book.code}
+                                                type="button"
+                                                onClick={() => setSelectedAuxBookType(book.code)}
+                                                className="p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-left group"
+                                            >
+                                                <span className="font-bold text-gray-800 group-hover:text-blue-700">{book.name}</span>
+                                                <span className="text-xs text-gray-400 block mt-1">Código: {book.code}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Step 2: Search and Select Entity */}
+                                    <div className="p-4 border-b border-gray-100">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedAuxBookType('')}
+                                                className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+                                            >
+                                                ← Cambiar tipo
+                                            </button>
+                                            <span className="text-gray-400">|</span>
+                                            <span className="text-sm font-bold text-indigo-700">
+                                                {AUXILIARY_BOOK_TYPES.find(b => b.code === selectedAuxBookType)?.name}
+                                            </span>
+                                        </div>
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                                            <input
+                                                type="text"
+                                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="Buscar por RUT o nombre..."
+                                                value={auxSearchTerm}
+                                                onChange={(e) => setAuxSearchTerm(e.target.value)}
+                                                autoFocus
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="overflow-y-auto flex-grow p-2 space-y-1 max-h-[300px]">
+                                        {filteredEntities.filter(e =>
+                                            e.name.toLowerCase().includes(auxSearchTerm.toLowerCase()) ||
+                                            e.rut.includes(auxSearchTerm)
+                                        ).length === 0 ? (
+                                            <div className="text-center py-8 text-gray-500 text-sm">No se encontraron entidades</div>
+                                        ) : (
+                                            filteredEntities.filter(e =>
+                                                e.name.toLowerCase().includes(auxSearchTerm.toLowerCase()) ||
+                                                e.rut.includes(auxSearchTerm)
+                                            ).map((entity, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    onClick={() => {
+                                                        if (auxiliaryLineId) {
+                                                            updateLine(auxiliaryLineId, 'rut', entity.rut);
+                                                            updateLine(auxiliaryLineId, 'auxiliaryType', selectedAuxBookType);
+                                                        }
+                                                        setShowAuxiliaryModal(false);
+                                                        setAuxiliaryLineId(null);
+                                                        setSelectedAuxBookType('');
+                                                        setAuxSearchTerm('');
+                                                    }}
+                                                    className="p-3 hover:bg-blue-50 rounded cursor-pointer border border-transparent hover:border-blue-100 transition-all group"
+                                                >
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="font-bold text-sm text-gray-800 group-hover:text-blue-700">{entity.name}</span>
+                                                        <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{entity.rut}</span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                            <div className="p-3 bg-gray-50 border-t border-gray-200 text-xs text-center text-gray-500 rounded-b-lg">
+                                {!selectedAuxBookType
+                                    ? 'Paso 1: Seleccione el tipo de libro auxiliar'
+                                    : 'Paso 2: Seleccione una entidad para asociar a esta línea'
+                                }
                             </div>
                         </div>
                     </div>
