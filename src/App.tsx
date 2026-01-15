@@ -137,7 +137,7 @@ import { initReactors } from './services/reactors';
 
 const MainContent: React.FC = () => {
   const { user } = useAuth();
-  const { journalEntries, saveEntry } = useAccounting();
+  const { journalEntries, saveEntry, deleteEntry } = useAccounting();
   const [currentView, setCurrentView] = useState<AppView>(AppView.DASHBOARD);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSIIModalOpen, setIsSIIModalOpen] = useState(false);
@@ -196,6 +196,17 @@ const MainContent: React.FC = () => {
           entries={journalEntries}
           onNewEntry={() => setIsModalOpen(true)}
           onGoBack={() => setCurrentView(AppView.DASHBOARD)}
+          onEditEntry={(entry) => {
+            setEditingEntry(entry);
+            setIsModalOpen(true);
+          }}
+          onDeleteEntry={async (id) => {
+            try {
+              await deleteEntry(id);
+            } catch (e) {
+              // Error already shown in context
+            }
+          }}
         />
       )}
 

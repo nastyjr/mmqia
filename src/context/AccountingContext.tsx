@@ -113,20 +113,35 @@ export const AccountingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
     };
 
-    // Placeholder for updateEntry - to be implemented
+    // Update an existing entry
     const updateEntry = async (entry: JournalEntry) => {
-        console.warn('updateEntry not yet implemented', entry);
-        // Implementation will go here, similar to saveEntry but always updating
-        // For now, just re-fetch to reflect any changes if saveEntry was called
-        await fetchEntries();
+        if (!user || !entry.id) return;
+        try {
+            const entryPayload: JournalEntryDB = {
+                date: entry.date,
+                type: entry.type,
+                glosa: entry.glosa,
+                total: entry.total,
+                lines: entry.lines
+            };
+            await journalEntriesService.update(entry.id, entryPayload);
+            await fetchEntries();
+        } catch (error: any) {
+            alert('Error actualizando el asiento: ' + error.message);
+            throw error;
+        }
     };
 
-    // Placeholder for deleteEntry - to be implemented
+    // Delete an entry by ID
     const deleteEntry = async (id: string) => {
-        console.warn('deleteEntry not yet implemented', id);
-        // Implementation will go here
-        // For now, just re-fetch
-        await fetchEntries();
+        if (!user) return;
+        try {
+            await journalEntriesService.delete(id);
+            await fetchEntries();
+        } catch (error: any) {
+            alert('Error eliminando el asiento: ' + error.message);
+            throw error;
+        }
     };
 
     const addBankTransaction = async (tx: any) => {
