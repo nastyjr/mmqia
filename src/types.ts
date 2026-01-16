@@ -231,6 +231,7 @@ export const INITIAL_ACCOUNTS: Account[] = [
   { code: '2.1.80.1', name: 'Obligaciones por Leasing Porción C/P', type: 'Pasivo', level: 3, isImputable: true },
   { code: '2.1.90.1', name: 'Intereses Diferidos por Leasing', type: 'Pasivo', level: 3, isImputable: true },
   { code: '2.1.100.1', name: 'Provisiones', type: 'Pasivo', level: 3, isImputable: true },
+  { code: '2.1.101.1', name: 'Proveedores', type: 'Pasivo', level: 3, isImputable: true },
   { code: '2.1.110.1', name: 'Remuneraciones por Pagar', type: 'Pasivo', level: 3, isImputable: true },
   { code: '2.1.120.1', name: 'Entidades Previsionales por Pagar', type: 'Pasivo', level: 3, isImputable: true },
   { code: '2.1.130.1', name: 'Impuesto Único por Pagar', type: 'Pasivo', level: 3, isImputable: true },
