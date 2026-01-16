@@ -72,57 +72,142 @@ export const Balance8ColumnasView: React.FC<{ onBack: () => void }> = ({ onBack 
     const formatCLP = (val: number) => val === 0 ? '-' : new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(val);
     const formatNum = (val: number) => val === 0 ? '0' : val.toString();
 
-    // Export to Excel (CSV format)
+    // Export to Excel - Professional SII Format
     const exportToExcel = () => {
-        const headers = ['Código', 'Cuenta', 'Débito', 'Crédito', 'Deudor', 'Acreedor', 'Activo', 'Pasivo', 'Pérdida', 'Ganancia'];
+        const today = new Date();
+        const formatDate = (d: Date) => d.toLocaleDateString('es-CL');
+        const fmtMoney = (v: number) => v === 0 ? '-' : '$' + v.toLocaleString('es-CL');
 
-        const rows = data.rows.map(row => [
-            row.account.code,
-            row.account.name,
-            formatNum(row.debit),
-            formatNum(row.credit),
-            formatNum(row.debtor),
-            formatNum(row.creditor),
-            formatNum(row.asset),
-            formatNum(row.liability),
-            formatNum(row.loss),
-            formatNum(row.gain)
-        ]);
+        // Get period from journal entries
+        const dates = journalEntries.map(e => e.date).filter(Boolean).sort();
+        const periodStart = dates[0] || today.toISOString().split('T')[0];
+        const periodEnd = dates[dates.length - 1] || today.toISOString().split('T')[0];
 
-        // Add totals row
-        rows.push([
-            '',
-            'TOTALES',
-            formatNum(data.totals.debit),
-            formatNum(data.totals.credit),
-            formatNum(data.totals.debtor),
-            formatNum(data.totals.creditor),
-            formatNum(data.totals.asset),
-            formatNum(data.totals.liability),
-            formatNum(data.totals.loss),
-            formatNum(data.totals.gain)
-        ]);
+        const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    body { font-family: Arial, sans-serif; font-size: 10pt; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .company { font-size: 14pt; font-weight: bold; }
+    .title { font-size: 12pt; font-weight: bold; margin: 10px 0; }
+    .period { font-size: 10pt; color: #666; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #000; padding: 4px 8px; }
+    th { background-color: #d9e8fb; font-weight: bold; text-align: center; font-size: 9pt; }
+    .subheader { background-color: #e8f0fe; }
+    td { text-align: right; font-size: 9pt; }
+    td:first-child, td:nth-child(2) { text-align: left; }
+    .totals { background-color: #f5f5f5; font-weight: bold; }
+    .result { background-color: #e6ffe6; font-weight: bold; }
+    .final { background-color: #333; color: white; font-weight: bold; }
+    .col-code { width: 80px; }
+    .col-name { width: 250px; }
+    .col-num { width: 90px; }
+    .section-header { background-color: #1a365d; color: white; font-weight: bold; text-align: center; }
+    .footer { margin-top: 30px; font-size: 8pt; color: #666; text-align: center; }
+</style>
+</head>
+<body>
 
-        // Add result row
-        rows.push([
-            '',
-            data.result >= 0 ? 'UTILIDAD DEL EJERCICIO' : 'PÉRDIDA DEL EJERCICIO',
-            '', '', '', '',
-            '',
-            data.result > 0 ? formatNum(data.result) : '',
-            data.result > 0 ? formatNum(data.result) : '',
-            ''
-        ]);
+<div class="header">
+    <div class="company">MCONSULTORES SOFTWARE</div>
+    <div class="title">BALANCE TRIBUTARIO DE 8 COLUMNAS</div>
+    <div class="period">Período: ${periodStart} al ${periodEnd}</div>
+    <div class="period">Generado: ${formatDate(today)}</div>
+</div>
 
-        const csvContent = [
-            headers.join(';'),
-            ...rows.map(r => r.map(cell => `"${cell}"`).join(';'))
-        ].join('\n');
+<table>
+    <thead>
+        <tr class="section-header">
+            <th colspan="2">CUENTAS</th>
+            <th colspan="2">SUMAS</th>
+            <th colspan="2">SALDOS</th>
+            <th colspan="2">INVENTARIO</th>
+            <th colspan="2">RESULTADO</th>
+        </tr>
+        <tr class="subheader">
+            <th class="col-code">Código</th>
+            <th class="col-name">Nombre de Cuenta</th>
+            <th class="col-num">Débitos</th>
+            <th class="col-num">Créditos</th>
+            <th class="col-num">Deudor</th>
+            <th class="col-num">Acreedor</th>
+            <th class="col-num">Activo</th>
+            <th class="col-num">Pasivo</th>
+            <th class="col-num">Pérdida</th>
+            <th class="col-num">Ganancia</th>
+        </tr>
+    </thead>
+    <tbody>
+        ${data.rows.map(row => `
+        <tr>
+            <td>${row.account.code}</td>
+            <td>${row.account.name}</td>
+            <td>${fmtMoney(row.debit)}</td>
+            <td>${fmtMoney(row.credit)}</td>
+            <td>${fmtMoney(row.debtor)}</td>
+            <td>${fmtMoney(row.creditor)}</td>
+            <td>${fmtMoney(row.asset)}</td>
+            <td>${fmtMoney(row.liability)}</td>
+            <td>${fmtMoney(row.loss)}</td>
+            <td>${fmtMoney(row.gain)}</td>
+        </tr>
+        `).join('')}
+        <tr class="totals">
+            <td></td>
+            <td><strong>SUMAS</strong></td>
+            <td>${fmtMoney(data.totals.debit)}</td>
+            <td>${fmtMoney(data.totals.credit)}</td>
+            <td>${fmtMoney(data.totals.debtor)}</td>
+            <td>${fmtMoney(data.totals.creditor)}</td>
+            <td>${fmtMoney(data.totals.asset)}</td>
+            <td>${fmtMoney(data.totals.liability)}</td>
+            <td>${fmtMoney(data.totals.loss)}</td>
+            <td>${fmtMoney(data.totals.gain)}</td>
+        </tr>
+        <tr class="result">
+            <td></td>
+            <td><strong>${data.result >= 0 ? 'UTILIDAD DEL EJERCICIO' : 'PÉRDIDA DEL EJERCICIO'}</strong></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>${data.result >= 0 ? fmtMoney(data.result) : ''}</td>
+            <td>${data.result >= 0 ? fmtMoney(data.result) : fmtMoney(Math.abs(data.result))}</td>
+            <td></td>
+        </tr>
+        <tr class="final">
+            <td></td>
+            <td><strong>TOTALES IGUALES</strong></td>
+            <td>${fmtMoney(data.totals.debit)}</td>
+            <td>${fmtMoney(data.totals.credit)}</td>
+            <td>${fmtMoney(data.totals.debtor)}</td>
+            <td>${fmtMoney(data.totals.creditor)}</td>
+            <td>${fmtMoney(data.totals.asset)}</td>
+            <td>${fmtMoney(data.totals.liability + (data.result > 0 ? data.result : 0))}</td>
+            <td>${fmtMoney(data.totals.loss + (data.result > 0 ? data.result : 0))}</td>
+            <td>${fmtMoney(data.totals.gain)}</td>
+        </tr>
+    </tbody>
+</table>
 
-        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8' });
+<div class="footer">
+    <p>Documento generado automáticamente - Balance Tributario conforme normativa SII Chile</p>
+    <p>MCONSULTORES SOFTWARE - Soluciones a su alcance</p>
+</div>
+
+</body>
+</html>
+        `;
+
+        const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `balance_8_columnas_${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `Balance_8_Columnas_${today.toISOString().split('T')[0]}.xls`;
         link.click();
     };
 
